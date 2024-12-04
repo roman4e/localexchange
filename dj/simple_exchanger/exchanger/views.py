@@ -17,7 +17,7 @@ def load_text_history():
 
 # View to handle index
 def index(request):
-    files = os.listdir(settings.MEDIA_ROOT)
+    files = [file for file in os.listdir(settings.MEDIA_ROOT) if not file.startswith('.')]
     text_history = load_text_history()
     latest_text = text_history[0] if text_history else ""
     return render(request, 'index.html', {'files': files, 'latest_text': latest_text, 'text_history': text_history, 'MEDIA_URL': settings.MEDIA_URL })
