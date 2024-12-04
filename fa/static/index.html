@@ -63,5 +63,31 @@
             });
         }
     </script>
+    
+    <script>
+        // Open a WebSocket connection
+        const sharedTextSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/shared_text'
+        );
+
+        const textArea = document.getElementById('shared_text');
+
+        // Handle incoming messages and update the textarea
+        sharedTextSocket.onmessage = function(e) {
+            const sharedText = e.data;
+            textArea.value = sharedText;
+        };
+
+        // Send the updated value of the textarea to the server
+        textArea.addEventListener('input', function() {
+            const sharedText = textArea.value;
+            sharedTextSocket.send(sharedText);
+        });
+
+        // Handle WebSocket errors
+        sharedTextSocket.onerror = function(e) {
+            console.error('WebSocket error:', e);
+        };
+    </script>
 </body>
 </html>

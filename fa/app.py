@@ -1,11 +1,15 @@
 # app.py
-from fastapi import FastAPI, File, UploadFile, Form, Request
+from fastapi import FastAPI, File, UploadFile, Form, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.websockets import WebSocketState
+from .connmanager import ConnectionManager
+
 import os
 import json
 
+manager = ConnectionManager()
 app = FastAPI()
 templates = Jinja2Templates(directory="static")
 
@@ -68,6 +72,17 @@ async def get_text_history(index: int = Form(...)):
     if 0 <= index < len(text_history):
         return JSONResponse({'text': text_history[index]})
     return JSONResponse({'text': ''})
+
+
+@app.websocket("/ws/shared_text")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await manager.broadcast(data)
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
 
 # Serve static files (like HTML templates)
 app.mount("/static", StaticFiles(directory="static"), name="static")
