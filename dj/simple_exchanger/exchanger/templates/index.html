@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File and Text Exchange with History</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>File and Text Exchange with History</h1>
+
+    <!-- File Upload Section -->
+    <h2>Upload a File</h2>
+    <form action="{% url 'upload' %}" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="file">
+        <button type="submit">Upload</button>
+    </form>
+
+    <!-- Display Uploaded Files with Delete Option -->
+    <h2>Available Files</h2>
+    <ul>
+        {% for file in files %}
+            <li>
+                <a href="{{ MEDIA_URL }}{{ file }}">{{ file }}</a>
+                <button onclick="deleteFile('{{ file }}')">Delete</button>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Text Exchange Section -->
+    <h2>Shared Text</h2>
+    <form action="{% url 'upload' %}" method="post">
+        {% csrf_token %}
+        <textarea name="shared_text" rows="5" cols="30">{{ latest_text }}</textarea>
+        <button type="submit">Save Text</button>
+    </form>
+
+    <!-- History Selector for Viewing Past Text Entries -->
+    <h3>Text History</h3>
+    <select id="textHistorySelector" onchange="loadTextFromHistory()">
+        {% for entry in text_history %}
+            <option value="{{ forloop.counter0 }}">{{ entry|truncatechars:30 }}</option>
+        {% endfor %}
+    </select>
+
+    <textarea id="historyText" rows="5" cols="30">{{ latest_text }}</textarea>
+
+    <script>
+        // Function to delete a file using AJAX
+        function deleteFile(filename) {
+            $.post('{% url "delete_file" %}', { filename: filename, csrfmiddlewaretoken: '{{ csrf_token }}' }, function(data) {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+
+        // Function to load selected text from history
+        function loadTextFromHistory() {
+            var index = $('#textHistorySelector').val();
+            $.post('{% url "get_text_history" %}', { index: index, csrfmiddlewaretoken: '{{ csrf_token }}' }, function(data) {
+                $('#historyText').val(data.text);
+            });
+        }
+    </script>
+</body>
+</html>
